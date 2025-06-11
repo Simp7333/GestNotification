@@ -2,16 +2,26 @@ package fr.gestnotification;
 
 import fr.gestnotification.model.Employe;
 import fr.gestnotification.model.Role;
+import fr.gestnotification.model.Service;
 import fr.gestnotification.service.ServiceNotification;
+import fr.gestnotification.db.DatabaseConnection;
+import fr.gestnotification.db.ServiceDAO;
 import java.util.Scanner;
+import java.sql.SQLException;
+import java.util.List;
 
 public class Main {
     private static ServiceNotification service;
+    private static ServiceDAO serviceDAO;
     private static Scanner scanner;
     private static Employe employeConnecte;
 
     public static void main(String[] args) {
+        // Initialiser la base de données
+        DatabaseConnection.initializeDatabase();
+        
         service = new ServiceNotification();
+        serviceDAO = new ServiceDAO();
         scanner = new Scanner(System.in);
 
         // Création automatique du compte admin
@@ -25,12 +35,9 @@ public class Main {
                 
                 switch (choix) {
                     case 1:
-                        creerCompte();
-                        break;
-                    case 2:
                         seConnecter();
                         break;
-                    case 3:
+                    case 2:
                         System.out.println("Au revoir !");
                         scanner.close();
                         return;
@@ -64,6 +71,12 @@ public class Main {
                         System.out.println("Au revoir !");
                         scanner.close();
                         return;
+                    case 8:
+                        ajouterEmployeParAdmin();
+                        break;
+                    case 9:
+                        gererServices();
+                        break;
                     default:
                         System.out.println("❌ Choix invalide. Veuillez réessayer.");
                 }
@@ -103,9 +116,8 @@ public class Main {
 
     private static void afficherMenuConnexion() {
         System.out.println("\n=== 🔐 Système de Notifications - Login ===");
-        System.out.println("1. Créer un compte");
-        System.out.println("2. Se connecter");
-        System.out.println("3. Quitter");
+        System.out.println("1. Se connecter");
+        System.out.println("2. Quitter");
         System.out.print("\nVotre choix : ");
     }
 
@@ -119,6 +131,8 @@ public class Main {
         System.out.println("5. Consulter mes notifications");
         System.out.println("6. Se déconnecter");
         System.out.println("7. Quitter");
+        System.out.println("8. Ajouter un employé");
+        System.out.println("9. Gérer les services");
         System.out.print("\nVotre choix : ");
     }
 
@@ -141,19 +155,6 @@ public class Main {
         } catch (NumberFormatException e) {
             return -1;
         }
-    }
-
-    private static void creerCompte() {
-        System.out.println("\n=== 📝 Création de compte ===");
-        System.out.print("ID de l'employé : ");
-        String id = scanner.nextLine();
-        System.out.print("Nom de l'employé : ");
-        String nom = scanner.nextLine();
-        System.out.print("Mot de passe : ");
-        String motDePasse = scanner.nextLine();
-
-        Employe employe = new Employe(id, nom, motDePasse);
-        service.ajouterEmploye(employe);
     }
 
     private static void seConnecter() {
@@ -202,7 +203,6 @@ public class Main {
         System.out.println("\n=== 📢 Envoi d'une notification ===");
         System.out.print("Message : ");
         String message = scanner.nextLine();
-
         service.notifierObservateurs(message, employeConnecte.toString());
     }
 
@@ -213,4 +213,133 @@ public class Main {
     private static void consulterMesNotifications() {
         employeConnecte.afficherNotifications();
     }
-}
+
+    private static void ajouterEmployeParAdmin() {
+        System.out.println("\n=== 📝 Ajout d'un employé ===");
+        System.out.print("ID de l'employé : ");
+        String id = scanner.nextLine();
+        System.out.print("Nom de l'employé : ");
+        String nom = scanner.nextLine();
+        System.out.print("Mot de passe : ");
+        String motDePasse = scanner.nextLine();
+        System.out.print("Rôle (1: ADMIN, 2: EMPLOYE) : ");
+        String roleChoix = scanner.nextLine();
+
+        Role role = roleChoix.equals("1") ? Role.ADMIN : Role.EMPLOYE;
+        Employe employe = new Employe(id, nom, motDePasse, role);
+        service.ajouterEmploye(employe);
+        System.out.println("✅ Employé créé avec succès avec le rôle : " + role);
+    }
+
+    private static void gererServices() {
+        while (true) {
+            System.out.println("\n=== 🔧 Gestion des Services ===");
+            System.out.println("1. Voir tous les services");
+            System.out.println("2. Créer un service");
+            System.out.println("3. Modifier un service");
+            System.out.println("4. Supprimer un service");
+            System.out.println("5. Retour au menu principal");
+            System.out.print("\nVotre choix : ");
+
+            int choix = lireChoix();
+            try {
+                switch (choix) {
+                    case 1:
+                        afficherTousLesServices();
+                        break;
+                    case 2:
+                        creerService();
+                        break;
+                    case 3:
+                        modifierService();
+                        break;
+                    case 4:
+                        supprimerService();
+                        break;
+                    case 5:
+                        return;
+                    default:
+                        System.out.println("❌ Choix invalide. Veuillez réessayer.");
+                }
+            } catch (SQLException e) {
+                System.err.println("❌ Erreur : " + e.getMessage());
+            }
+        }
+    }
+
+    private static void afficherTousLesServices() throws SQLException {
+        List<Service> services = serviceDAO.chargerTousLesServices();
+        if (services.isEmpty()) {
+            System.out.println("Aucun service n'existe.");
+            return;
+        }
+        System.out.println("\n=== 📋 Liste des Services ===");
+        for (Service service : services) {
+            System.out.println(service);
+        }
+    }
+
+    private static void creerService() throws SQLException {
+        System.out.println("\n=== ➕ Création d'un Service ===");
+        System.out.print("ID du service : ");
+        String id = scanner.nextLine();
+        System.out.print("Nom du service : ");
+        String nom = scanner.nextLine();
+        System.out.print("Description : ");
+        String description = scanner.nextLine();
+
+        Service service = new Service(id, nom, description);
+        serviceDAO.creerService(service);
+        System.out.println("✅ Service créé avec succès");
+    }
+
+    private static void modifierService() throws SQLException {
+        System.out.println("\n=== ✏️ Modification d'un Service ===");
+        System.out.print("ID du service à modifier : ");
+        String id = scanner.nextLine();
+
+        Service service = serviceDAO.chargerService(id);
+        if (service == null) {
+            System.out.println("❌ Service non trouvé");
+            return;
+        }
+
+        System.out.print("Nouveau nom (" + service.getNom() + ") : ");
+        String nom = scanner.nextLine();
+        if (!nom.isEmpty()) service.setNom(nom);
+
+        System.out.print("Nouvelle description (" + service.getDescription() + ") : ");
+        String description = scanner.nextLine();
+        if (!description.isEmpty()) service.setDescription(description);
+
+        System.out.print("Service actif (o/n) [" + (service.isActif() ? "o" : "n") + "] : ");
+        String actif = scanner.nextLine();
+        if (!actif.isEmpty()) {
+            service.setActif(actif.toLowerCase().startsWith("o"));
+        }
+
+        serviceDAO.modifierService(service);
+        System.out.println("✅ Service modifié avec succès");
+    }
+
+    private static void supprimerService() throws SQLException {
+        System.out.println("\n=== 🗑️ Suppression d'un Service ===");
+        System.out.print("ID du service à supprimer : ");
+        String id = scanner.nextLine();
+
+        Service service = serviceDAO.chargerService(id);
+        if (service == null) {
+            System.out.println("❌ Service non trouvé");
+            return;
+        }
+
+        System.out.print("Êtes-vous sûr de vouloir supprimer le service " + service.getNom() + " ? (o/n) : ");
+        String confirmation = scanner.nextLine();
+        if (confirmation.toLowerCase().startsWith("o")) {
+            serviceDAO.supprimerService(id);
+            System.out.println("✅ Service supprimé avec succès");
+        } else {
+            System.out.println("❌ Suppression annulée");
+        }
+    }
+} 

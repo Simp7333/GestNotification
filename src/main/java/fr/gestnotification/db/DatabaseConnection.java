@@ -8,7 +8,7 @@ import java.sql.Statement;
 public class DatabaseConnection {
     private static final String URL = "jdbc:mysql://localhost:3306/gestnotification";
     private static final String USER = "root";
-    private static final String PASSWORD = "root";
+    private static final String PASSWORD = "";
 
     private static Connection connection;
 
@@ -62,6 +62,16 @@ public class DatabaseConnection {
                 "date_abonnement DATETIME NOT NULL," +
                 "FOREIGN KEY (employe_id) REFERENCES employes(id)," +
                 "PRIMARY KEY (employe_id)" +
+                ")"
+            );
+
+            // Table Services
+            statement.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS services (" +
+                "id VARCHAR(50) PRIMARY KEY," +
+                "nom VARCHAR(100) NOT NULL," +
+                "description TEXT," +
+                "actif BOOLEAN DEFAULT true" +
                 ")"
             );
 
