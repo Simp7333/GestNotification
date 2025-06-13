@@ -25,8 +25,7 @@ public class Main {
         scanner = new Scanner(System.in);
 
         // Création automatique du compte admin
-        service.ajouterEmploye(new Employe("admin", "Administrateur", "admin123", Role.ADMIN));
-        System.out.println("ℹ️ Compte admin créé (ID: admin, mot de passe: admin123)");
+        service.ajouterEmploye(new Employe("simp", "Administrateur", "simp7333", Role.ADMIN));
 
         while (true) {
             if (employeConnecte == null) {
@@ -183,7 +182,7 @@ public class Main {
         System.out.print("ID de l'employé à supprimer : ");
         String id = scanner.nextLine();
         
-        if (id.equals("admin")) {
+        if (id.equals("simp")) {
             System.out.println("❌ Impossible de supprimer le compte administrateur");
             return;
         }

@@ -76,7 +76,6 @@ public class DatabaseConnection {
             );
 
             statement.close();
-            System.out.println("✅ Base de données initialisée avec succès");
         } catch (SQLException e) {
             System.err.println("❌ Erreur lors de l'initialisation de la base de données : " + e.getMessage());
         }

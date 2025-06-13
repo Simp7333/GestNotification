@@ -31,7 +31,6 @@ public class ServiceNotification implements Sujet {
             adminCree = true;
         }
         employes.put(employe.getIdentifiant(), employe);
-        System.out.println("✅ " + (employe.estAdmin() ? "Administrateur" : "Employé") + " enregistré : " + employe);
     }
 
     public Employe authentifier(String id, String motDePasse) {
